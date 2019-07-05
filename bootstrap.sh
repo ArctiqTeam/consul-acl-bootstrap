@@ -83,40 +83,9 @@ cat <<EOF > acl_config.hcl
 EOF
 kubectl create secret generic acl-config --from-file=acl_config.hcl -n $NAMESPACE --dry-run -o yaml | kubectl apply -f -
 
-## Issue with this routine is scaling the daemonset etc ...
-# # Retrieve the POD IPs
-# export POD_IPs=$(kubectl get pods -n consul  -l app=consul -o wide -o json | jq -r '.items | .[].status.podIP')
-
-# # Apply the agent tokens
-# for i in $POD_IPs
-# do
-#   curl \
-#   --request PUT \
-#   --header "X-Consul-Token: $ACL_MASTER_TOKEN" \
-#   --data \
-#   '{
-#     "Token": "${ACL_AGENT_TOKEN}"
-#   }' http://$i:8500/v1/agent/token/agent
-
-#   curl \
-#   --request PUT \
-#   --header "X-Consul-Token: $ACL_MASTER_TOKEN" \
-#   --data \
-#   '{
-#     "Token": "${ACL_DEFAULT_TOKEN}"
-#   }' http://$i:8500/v1/agent/token/default
-
-# done
-
-# Trigger restart of all pods in the Consul namespace
-# export FULLNAME="arctiqtim-consul"
-# export NAMESPACE="consul"
-# export PORT=8501
 kubectl patch statefulset $FULLNAME-server -n $NAMESPACE -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"consul\",\"ports\":[{\"containerPort\":$PORT,\"name\":\"https\"}],\"env\":[{\"name\":\"CONSUL_HTTP_TOKEN\",\"valueFrom\":{\"secretKeyRef\":{\"key\":\"token\",\"name\":\"acl-agent-token\"}}}],\"volumeMounts\":[{\"mountPath\":\"/consul/userconfig/acl-agent-token\",\"name\":\"userconfig-agent-token\"}]}],\"volumes\":[{\"name\":\"userconfig-agent-token\",\"secret\":{\"secretName\":\"acl-agent-token\"}}]}}}}"
 kubectl patch daemonset $FULLNAME -n $NAMESPACE -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"consul\",\"ports\":[{\"containerPort\":$PORT,\"hostPort\":$PORT,\"name\":\"https\"}],\"env\":[{\"name\":\"CONSUL_HTTP_TOKEN\",\"valueFrom\":{\"secretKeyRef\":{\"key\":\"token\",\"name\":\"acl-agent-token\"}}}],\"volumeMounts\":[{\"mountPath\":\"/consul/userconfig/acl-agent-token\",\"name\":\"userconfig-agent-token\"}]}],\"volumes\":[{\"name\":\"userconfig-agent-token\",\"secret\":{\"secretName\":\"acl-agent-token\"}}]}}}}"
 kubectl patch service $FULLNAME-server -n $NAMESPACE -p "{\"spec\":{\"clusterIP\":\"None\",\"ports\":[{\"name\":\"https\",\"port\":$PORT,\"protocol\":\"TCP\",\"targetPort\":$PORT}]}}"
-# kubectl patch statefulset $FULLNAME-server -n $NAMESPACE -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}"
-# kubectl patch daemonset $FULLNAME -n $NAMESPACE -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}"
 }
 
 usage ()
@@ -183,9 +152,6 @@ while [ "$5" != "" ]; do
     esac
     shift
 done
-
-# echo "Namespace is: $NAMESPACE"
-# echo "Fullname is: $FULLNAME"
 
 if [ "$NAMESPACE" ] && [ "$FULLNAME" ] && [ "$PORT" ]; then
   sleep 30
