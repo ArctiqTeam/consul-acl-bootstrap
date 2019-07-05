@@ -1,0 +1,15 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'build'
+    - '-t'
+    - 'gcr.io/$PROJECT_ID/consul-acl-bootstrap:$TAG_NAME'
+    - '.'
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'tag'
+    - 'gcr.io/$PROJECT_ID/consul-acl-bootstrap:$TAG_NAME'
+    - 'gcr.io/$PROJECT_ID/consul-acl-bootstrap:latest'
+images:
+  - gcr.io/$PROJECT_ID/consul-acl-bootstrap:$TAG_NAME
+  - gcr.io/$PROJECT_ID/consul-acl-bootstrap:latest
