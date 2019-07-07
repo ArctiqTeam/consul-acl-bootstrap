@@ -26,6 +26,7 @@ In order to get started using this project a Consul deployment needs to be creat
 
 ### Installing
 
+Modify the namespace if desired. The details below assume the `consul` namespace.
 Once the requirements have been met, deploy the bootstrap job as follows:
 
 ```shell
